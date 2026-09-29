@@ -448,7 +448,10 @@ function renderCrosslinkHTML(form) {
   storesCache.forEach(function(s){
     h += '<option value="'+escAttr(s.masap)+'" data-gdv="'+escAttr(s.gdv)+'" data-qlkv="'+escAttr(s.qlkv)+'" data-mien="'+getMien(s.tinh)+'" '+(form.crosslinkCH===s.masap?'selected':'')+'>'+s.masap+' - '+escHtml(s.tenCH)+'</option>';
   });
-  h += '</select></div></div></div>';
+  h += '</select></div>';
+  // Summary row
+  h += '<div id="crosslink-summary-'+id+'" style="margin-top:8px;padding:6px 10px;background:rgba(255,255,255,.7);border-radius:6px;font-size:12px;color:var(--muted)"></div>';
+  h += '</div></div>';
   return h;
 }
 
@@ -817,6 +820,7 @@ function filterCrosslinkByMien(formId) {
   
   // Cascade: uncheck QLKV not matching remaining GĐV
   updateCrosslinkMulti(formId);
+  updateCrosslinkSummary(formId);
 }
 
 function updateCrosslinkMulti(formId) {
@@ -915,6 +919,22 @@ function filterCHDropdown(formId) {
     if (selQLKV.length > 0 && selQLKV.indexOf(optQlkv) < 0) show = false;
     opt.style.display = show ? '' : 'none';
   });
+  // Update summary
+  updateCrosslinkSummary(formId);
+}
+
+function updateCrosslinkSummary(formId) {
+  var summary = document.getElementById('crosslink-summary-'+formId);
+  if (!summary) return;
+  var mien = document.getElementById('mien-filter-'+formId).value;
+  var selGDV = document.querySelectorAll('.gdv-checkbox:checked').length;
+  var selQLKV = document.querySelectorAll('.qlkv-checkbox:checked').length;
+  var visibleCH = 0;
+  var chOpts = document.querySelectorAll('#ch-select-'+formId+' option');
+  chOpts.forEach(function(opt, i){
+    if (i>0 && opt.style.display !== 'none') visibleCH++;
+  });
+  summary.textContent = '🌍 ' + (mien || 'Tất cả') + ' · 👤 ' + selGDV + ' GĐV · 👥 ' + selQLKV + ' QLKV · 🏪 ' + visibleCH + ' CH';
 }
 
 function toggleDeadlineF(on) {
