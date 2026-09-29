@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rural Forms — Tạo Form Thống Kê</title>
+<style>
+:root {
+  --primary: #4f46e5; --primary-light: #eef2ff; --border: #e2e8f0;
+  --bg: #f8fafc; --card: #fff; --text: #1e293b; --muted: #64748b;
+  --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+header { background:var(--card); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+header h1 { font-size:20px; font-weight:600; color:var(--primary); }
+header nav { display:flex; gap:8px; }
+.btn { padding:8px 16px; border-radius:8px; border:none; font-size:14px; font-weight:500; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:6px; }
+.btn-primary { background:var(--primary); color:#fff; } .btn-primary:hover { filter:brightness(1.1); }
+.btn-outline { background:var(--card); border:1px solid var(--border); } .btn-outline:hover { background:var(--bg); }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-sm { padding:4px 10px; font-size:12px; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+.container { max-width:900px; margin:0 auto; padding:24px; }
+
+.forms-list { display:flex; flex-direction:column; gap:8px; }
+.form-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:all .15s; }
+.form-card:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(79,70,229,.1); }
+.form-card .info h3 { font-size:15px; margin-bottom:4px; }
+.form-card .info span { font-size:13px; color:var(--muted); }
+.form-card .actions { display:flex; gap:8px; align-items:center; }
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+.empty-state h2 { font-size:20px; margin-bottom:8px; color:var(--text); }
+.empty-state p { font-size:14px; margin-bottom:20px; }
+
+.editor-header { margin-bottom:24px; }
+.editor-header input.title { font-size:28px; font-weight:600; border:none; outline:none; width:100%; padding:8px 0; border-bottom:2px solid transparent; transition:border-color .15s; background:transparent; }
+.editor-header input.title:focus { border-color:var(--primary); }
+.editor-header input.desc { font-size:15px; color:var(--muted); border:none; outline:none; width:100%; padding:4px 0; margin-top:4px; background:transparent; }
+
+.question-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:12px; position:relative; }
+.question-card:hover { border-color:var(--primary); }
+.question-card .q-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.question-card .q-number { font-weight:700; color:var(--primary); min-width:28px; }
+.question-card input.q-title { flex:1; border:none; border-bottom:1px solid var(--border); padding:6px 4px; font-size:15px; outline:none; }
+.question-card input.q-title:focus { border-color:var(--primary); }
+.question-card select.q-type { border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:13px; background:var(--card); }
+.question-card .q-body { padding-left:40px; }
+.option-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.option-row span.opt-num { font-size:13px; color:var(--muted); min-width:20px; }
+.option-row input { flex:1; border:none; border-bottom:1px solid var(--border); padding:6px 4px; font-size:14px; outline:none; }
+.option-row input:focus { border-color:var(--primary); }
+.option-row .remove-opt { color:var(--muted); cursor:pointer; padding:4px; border-radius:4px; }
+.option-row .remove-opt:hover { color:var(--danger); background:#fef2f2; }
+.add-option { color:var(--primary); font-size:13px; margin-top:8px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+.q-footer { display:flex; align-items:center; justify-content:space-between; padding-left:40px; margin-top:12px; }
+.q-footer .toggle { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); cursor:pointer; }
+.q-footer .toggle input { margin:0; }
+.q-actions { display:flex; gap:4px; }
+.q-actions button { background:none; border:none; cursor:pointer; padding:6px; border-radius:6px; color:var(--muted); }
+.q-actions button:hover { background:#f1f5f9; color:var(--danger); }
+.add-question-bar { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.add-question-bar button { flex:1; min-width:120px; padding:10px; background:var(--card); border:1px dashed var(--border); border-radius:8px; cursor:pointer; font-size:14px; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:6px; }
+.add-question-bar button:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+
+.crosslink-section { background:#f0fdf4; border:2px solid #bbf7d0; border-radius:12px; padding:16px; margin-bottom:16px; }
+.crosslink-section h3 { font-size:16px; color:#166534; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.crosslink-row { display:flex; gap:12px; align-items:center; margin-bottom:8px; }
+.crosslink-row label { font-size:13px; font-weight:500; color:var(--muted); min-width:70px; }
+.crosslink-row select { flex:1; border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:14px; background:var(--card); }
+
+.preview-container { max-width:720px; margin:0 auto; }
+.preview-header { background:var(--primary); color:#fff; padding:24px; border-radius:12px 12px 0 0; border-top:8px solid #3730a3; }
+.preview-header h2 { font-size:24px; margin-bottom:4px; }
+.preview-header p { font-size:14px; opacity:.9; }
+.preview-header .crosslink-badge { display:inline-block; background:rgba(255,255,255,.2); padding:2px 8px; border-radius:4px; font-size:12px; margin-top:8px; }
+.preview-item { background:var(--card); border:1px solid var(--border); padding:24px; }
+.preview-item + .preview-item { border-top:none; }
+.preview-item:last-child { border-radius:0 0 12px 12px; }
+.preview-item .pi-number { font-weight:600; color:var(--primary); margin-bottom:4px; }
+.preview-item .pi-title { font-size:16px; font-weight:500; margin-bottom:4px; }
+.preview-item .pi-required { color:var(--danger); font-size:13px; }
+.preview-item .pi-input { margin-top:8px; border-bottom:1px dashed var(--border); padding:8px 0; color:var(--muted); font-size:14px; }
+.submit-btn { margin-top:16px; width:100%; padding:12px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer; }
+.submit-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+.responses-table { width:100%; border-collapse:collapse; font-size:13px; }
+.responses-table th { background:var(--bg); padding:10px 12px; text-align:left; font-weight:600; border-bottom:2px solid var(--border); white-space:nowrap; position:sticky; top:0; }
+.responses-table td { padding:10px 12px; border-bottom:1px solid var(--border); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.responses-wrapper { overflow-x:auto; max-height:500px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center; }
+.stat-card .num { font-size:28px; font-weight:700; color:var(--primary); }
+.stat-card .label { font-size:13px; color:var(--muted); margin-top:4px; }
+
+.toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:12px 20px; border-radius:8px; font-size:14px; z-index:1000; animation:slideIn .3s ease; }
+@keyframes slideIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.hidden { display:none !important; }
+.spinner { display:inline-block; width:20px; height:20px; border:2px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:500; }
+.badge-green { background:#dcfce7; color:#166534; }
+.badge-blue { background:#dbeafe; color:#1e40af; }
+
+.loading-overlay { position:fixed; inset:0; background:rgba(255,255,255,.7); z-index:300; display:flex; align-items:center; justify-content:center; }
+.setup-banner { background:#fef3c7; border:1px solid #fcd34d; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:14px; }
+.setup-banner code { background:#fde68a; padding:2px 6px; border-radius:4px; font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📋 Rural Forms</h1>
+  <nav id="nav-bar"></nav>
+</header>
+<div class="container" id="app"></div>
+<div id="loading" class="loading-overlay hidden"><div class="spinner" style="width:40px;height:40px"></div></div>
+
+<script>
+// ==================== CONFIG ====================
+// Replace with your deployed Google Apps Script Web App URL
+const API_BASE = 'https://script.google.com/macros/s/AKfycbx_SK3DlPnmeBho7RRufRfDrujGThmU2OGKkHiJXxNdIrkOcd8uBfYPvSNmoASbuDiLkw/exec';
+
+// ==================== STATE ====================
+let formsCache = [];
+let storesCache = [];
+let gdvList = [];
+let qlkvList = [];
+let currentView = '';
+
+// ==================== API HELPERS ====================
+function showLoading() { document.getElementById('loading').classList.remove('hidden'); }
+function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
+
+async function api(action, data = {}, formId = '') {
+  if (API_BASE === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    // Fallback to localStorage mode
+    return apiLocal(action, data, formId);
+  }
+  
+  const body = { action, data, formId };
+  try {
+    const res = await fetch(API_BASE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error('API Error:', err);
+    return { success: false, error: 'Không kết nối được server. ' + err.message };
+  }
+}
+
+// ==================== LOCAL FALLBACK (no GAS yet) ====================
+function apiLocal(action, data, formId) {
+  const KEY = 'rural_forms_local';
+  let store = JSON.parse(localStorage.getItem(KEY) || '{"forms":[],"responses":{}}');
+  
+  switch (action) {
+    case 'listForms':
+      return { success: true, forms: store.forms };
+    case 'getForm':
+      return { success: true, form: store.forms.find(f => String(f.id) === String(formId || data.id)) || null };
+    case 'createForm': {
+      const id = Math.max(0, ...store.forms.map(f => f.id)) + 1;
+      const form = { id, title: data.title || '', description: data.description || '',
+        crosslinkEnabled: data.crosslinkEnabled !== false,
+        crosslinkGDV: data.crosslinkGDV || '', crosslinkQLKV: data.crosslinkQLKV || '', crosslinkCH: data.crosslinkCH || '',
+        questions: data.questions || [], created: new Date().toISOString(), updated: new Date().toISOString() };
+      store.forms.push(form);
+      store.responses[id] = store.responses[id] || [];
+      localStorage.setItem(KEY, JSON.stringify(store));
+      return { success: true, form };
+    }
+    case 'updateForm': {
+      const f = store.forms.find(f2 => String(f2.id) === String(formId));
+      if (!f) return { success: false, error: 'Not found' };
+      Object.assign(f, data);
+      f.updated = new Date().toISOString();
+      localStorage.setItem(KEY, JSON.stringify(store));
+      return { success: true, form: f };
+    }
+    case 'deleteForm':
+      store.forms = store.forms.filter(f => String(f.id) !== String(formId));
+      delete store.responses[formId];
+      localStorage.setItem(KEY, JSON.stringify(store));
+      return { success: true };
+    case 'submitResponse':
+      store.responses[formId] = store.responses[formId] || [];
+      store.responses[formId].push({ timestamp: new Date().toISOString(), crosslink: data.crosslink || {}, answers: data.answers || [] });
+      localStorage.setItem(KEY, JSON.stringify(store));
+      return { success: true, message: 'Submitted' };
+    case 'listResponses':
+      return { success: true, responses: store.responses[formId] || [] };
+    default:
+      return { success: false, error: 'Unknown action' };
+  }
+}
+
+// ==================== LOAD STORES ====================
+async function loadStores() {
+  if (storesCache.length > 0) return;
+  try {
+    const url = 'https://docs.google.com/spreadsheets/d/1fMmEm1GC9aei_3oeu2vcadPVsUM9ms9eVhm99d7pF8A/gviz/tq?tqx=out:csv&gid=900581387';
+    const res = await fetch(url);
+    const csv = await res.text();
+    const lines = csv.trim().split('\n');
+    const headers = parseCSVLine(lines[0]);
+    const idx = {
+      masap: headers.indexOf('"Mã SAP"'),
+      tenCH: headers.indexOf('"Tên cửa hàng"'),
+      tinhTrang: headers.indexOf('"Tình Trạng"'),
+      qlkv: headers.indexOf('"QLKV"'),
+      gdv: headers.indexOf('"GĐV"'),
+      tinh: headers.indexOf('"Tỉnh/TP"')
+    };
+    const gSet = new Set(), qSet = new Set();
+    for (let i = 1; i < lines.length; i++) {
+      const row = parseCSVLine(lines[i]);
+      if (cleanCSV(row[idx.tinhTrang]) !== 'Đang hoạt động') continue;
+      const s = {
+        masap: cleanCSV(row[idx.masap]), tenCH: cleanCSV(row[idx.tenCH]),
+        qlkv: cleanCSV(row[idx.qlkv]), gdv: cleanCSV(row[idx.gdv]), tinh: cleanCSV(row[idx.tinh])
+      };
+      storesCache.push(s);
+      if (s.gdv) gSet.add(s.gdv);
+      if (s.qlkv) qSet.add(s.qlkv);
+    }
+    gdvList = [...gSet].sort();
+    qlkvList = [...qSet].sort();
+    console.log(`Loaded ${storesCache.length} stores, ${gdvList.length} GĐV, ${qlkvList.length} QLKV`);
+  } catch (e) { console.error('Load stores failed:', e); }
+}
+function parseCSVLine(l) { const r=[]; let c='',q=false; for(let i=0;i<l.length;i++){const ch=l[i];if(ch==='"'){q=!q;c+=ch}else if(ch===','&&!q){r.push(c);c=''}else c+=ch}r.push(c);return r; }
+function cleanCSV(s) { return (s||'').replace(/^"/,'').replace(/"$/,'').trim(); }
+
+// ==================== ROUTING ====================
+async function route() {
+  const hash = location.hash.replace('#','');
+  const nav = document.getElementById('nav-bar');
+  const app = document.getElementById('app');
+  
+  if (hash.startsWith('edit/')) {
+    const id = parseInt(hash.split('/')[1]);
+    nav.innerHTML = `<button class="btn btn-outline" onclick="location.hash=''">← Về Dashboard</button>`;
+    app.innerHTML = '';
+    await renderEditor(id);
+  } else if (hash.startsWith('preview/')) {
+    const id = parseInt(hash.split('/')[1]);
+    nav.innerHTML = `<button class="btn btn-outline" onclick="location.hash='#edit/${id}'">← Sửa Form</button>`;
+    app.innerHTML = '';
+    await renderPreview(id);
+  } else if (hash.startsWith('responses/')) {
+    const id = parseInt(hash.split('/')[1]);
+    nav.innerHTML = `<button class="btn btn-outline" onclick="location.hash=''">← Dashboard</button>
+      <button class="btn btn-primary btn-sm" onclick="exportCSV(${id})">📥 Export CSV</button>`;
+    app.innerHTML = '';
+    await renderResponses(id);
+  } else if (hash.startsWith('fill/')) {
+    const id = parseInt(hash.split('/')[1]);
+    nav.innerHTML = '';
+    app.innerHTML = '';
+    await renderFill(id);
+  } else {
+    nav.innerHTML = `<button class="btn btn-primary" onclick="createForm()">+ Tạo Form Mới</button>`;
+    app.innerHTML = '';
+    await renderDashboard();
+  }
+}
+window.onhashchange = () => route();
+
+// ==================== DASHBOARD ====================
+async function renderDashboard() {
+  showLoading();
+  const res = await api('listForms');
+  hideLoading();
+  formsCache = res.forms || [];
+  
+  const app = document.getElementById('app');
+  if (API_BASE === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    app.innerHTML = `<div class="setup-banner">
+      ⚠️ <strong>Chưa cấu hình backend!</strong> Đang dùng <code>localStorage</code> — data chỉ lưu trên máy này.<br>
+      Để dùng chung cả team: Deploy <code>Code.gs</code> lên Google Apps Script rồi thay <code>API_BASE</code> trong file này.
+    </div>` + formsListHTML();
+  } else {
+    app.innerHTML = formsListHTML();
+  }
+}
+
+function formsListHTML() {
+  if (formsCache.length === 0) {
+    return `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:80px;height:80px;opacity:.3;margin-bottom:16px"><path d="M9 12h6m-3-3v6m-6 4h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"/></svg>
+      <h2>Chưa có Form nào</h2><p>Tạo form thống kê đầu tiên với Cross Link GĐV/QLKV/CH</p>
+      <button class="btn btn-primary" onclick="createForm()">+ Tạo Form Mới</button></div>`;
+  }
+  let h = '<div class="forms-list">';
+  for (const f of formsCache) {
+    h += `<div class="form-card">
+      <div class="info" onclick="location.hash='#edit/${f.id}'"><h3>${escHtml(f.title||'Chưa có tiêu đề')}</h3>
+        <span>${(f.questions||[]).length} câu hỏi · ${new Date(f.updated||f.created).toLocaleDateString('vi-VN')}</span></div>
+      <div class="actions">
+        <span class="badge ${f.crosslinkEnabled?'badge-green':'badge-blue'}">${f.crosslinkEnabled?'🔗 Cross Link':'📝 Thường'}</span>
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();copyFillLink(${f.id})" title="Copy link">🔗</button>
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();location.hash='#responses/${f.id}'">📊</button>
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();location.hash='#preview/${f.id}'">👁</button>
+        <button class="btn btn-outline btn-sm" style="color:var(--danger)" onclick="event.stopPropagation();deleteForm(${f.id})">🗑</button>
+      </div></div>`;
+  }
+  h += '</div>';
+  return h;
+}
+
+async function createForm() {
+  showLoading();
+  const res = await api('createForm', { title: '', description: '', questions: [], crosslinkEnabled: true });
+  hideLoading();
+  if (res.success) {
+    formsCache.push(res.form);
+    location.hash = `#edit/${res.form.id}`;
+  } else {
+    showToast('❌ Lỗi tạo form: ' + res.error);
+  }
+}
+
+async function deleteForm(id) {
+  if (!confirm('Xóa form này? Dữ liệu responses cũng sẽ bị xóa.')) return;
+  showLoading();
+  await api('deleteForm', {}, id);
+  formsCache = formsCache.filter(f => f.id !== id);
+  hideLoading();
+  route();
+}
+
+function copyFillLink(id) {
+  const url = location.origin + location.pathname + '#fill/' + id;
+  navigator.clipboard.writeText(url).then(() => showToast('✅ Đã copy link điền form!'));
+}
+
+// ==================== FORM EDITOR ====================
+async function renderEditor(id) {
+  showLoading();
+  let res = await api('getForm', {}, id);
+  if (!res.success || !res.form) { hideLoading(); showToast('Form không tồn tại'); location.hash=''; return; }
+  const form = res.form;
+  if (!form.crosslinkEnabled) form.crosslinkEnabled = true; // default
+  
+  await loadStores();
+  hideLoading();
+  
+  const app = document.getElementById('app');
+  let h = `<div class="editor-header">
+    <input class="title" value="${escAttr(form.title)}" placeholder="Tiêu đề Form" onchange="updateFormField(${id},'title',this.value)">
+    <input class="desc" value="${escAttr(form.description||'')}" placeholder="Mô tả Form" onchange="updateFormField(${id},'description',this.value)"></div>
+    
+  <div class="crosslink-section">
+    <h3>🔗 Cross Link — Liên kết GĐV / QLKV / CH</h3>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer">
+      <input type="checkbox" ${form.crosslinkEnabled?'checked':''} onchange="toggleCrossLink(${id},this.checked)">
+      <span style="font-size:14px">Bật Cross Link (mỗi response gắn với GĐV/QLKV/CH cụ thể)</span></label>
+    <div id="crosslink-fields" class="${form.crosslinkEnabled?'':'hidden'}">
+      <div class="crosslink-row"><label>GĐV:</label>
+        <select onchange="updateFormField(${id},'crosslinkGDV',this.value)">
+          <option value="">-- Chọn GĐV (để trống cho người điền chọn) --</option>
+          ${gdvList.map(g=>`<option value="${escAttr(g)}" ${form.crosslinkGDV===g?'selected':''}>${g}</option>`).join('')}</select></div>
+      <div class="crosslink-row"><label>QLKV:</label>
+        <select onchange="updateFormField(${id},'crosslinkQLKV',this.value)">
+          <option value="">-- Chọn QLKV (để trống cho người điền chọn) --</option>
+          ${qlkvList.map(q=>`<option value="${escAttr(q)}" ${form.crosslinkQLKV===q?'selected':''}>${q}</option>`).join('')}</select></div>
+      <div class="crosslink-row"><label>CH:</label>
+        <select onchange="updateFormField(${id},'crosslinkCH',this.value)">
+          <option value="">-- Chọn CH (để trống cho người điền chọn) --</option>
+          ${storesCache.map(s=>`<option value="${escAttr(s.masap)}" ${form.crosslinkCH===s.masap?'selected':''}>${s.masap} - ${escHtml(s.tenCH)}</option>`).join('')}</select></div></div></div>
+  <div id="questions-container">`;
+  
+  (form.questions||[]).forEach((q, idx) => { h += renderQuestion(q, idx, id); });
+  h += `</div>
+  <div class="add-question-bar">
+    <button onclick="addQuestion(${id},'short')">✏️ Trả lời ngắn</button>
+    <button onclick="addQuestion(${id},'paragraph')">📝 Đoạn văn</button>
+    <button onclick="addQuestion(${id},'multiple')">☑️ Trắc nghiệm</button>
+    <button onclick="addQuestion(${id},'checkboxes')">✅ Checkboxes</button>
+    <button onclick="addQuestion(${id},'dropdown')">📋 Dropdown</button>
+    <button onclick="addQuestion(${id},'date')">📅 Ngày</button>
+    <button onclick="addQuestion(${id},'number')">🔢 Số</button></div>
+  <div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;padding-bottom:40px">
+    <button class="btn btn-outline" onclick="location.hash='#preview/${id}'">👁 Xem trước</button>
+    <button class="btn btn-primary" onclick="saveAndShare(${id})">💾 Lưu & Share</button></div>`;
+  app.innerHTML = h;
+}
+
+function renderQuestion(q, idx, formId) {
+  const types = {short:'Trả lời ngắn',paragraph:'Đoạn văn',multiple:'Trắc nghiệm',checkboxes:'Checkboxes',dropdown:'Dropdown',date:'Ngày',number:'Số'};
+  let body = '';
+  if (['multiple','checkboxes','dropdown'].includes(q.type)) {
+    body += `<div id="options-${idx}">`;
+    (q.options||['Lựa chọn 1']).forEach((opt, oi) => {
+      body += `<div class="option-row"><span class="opt-num">${oi+1}.</span>
+        <input value="${escAttr(opt)}" onchange="updateOption(${formId},${idx},${oi},this.value)" placeholder="Lựa chọn ${oi+1}">
+        <span class="remove-opt" onclick="removeOption(${formId},${idx},${oi})">✕</span></div>`;
+    });
+    body += `</div><span class="add-option" onclick="addOption(${formId},${idx})">+ Thêm lựa chọn</span>`;
+  }
+  const form = formsCache.find(f => f.id === formId);
+  const totalQ = form ? (form.questions||[]).length : 0;
+  
+  return `<div class="question-card" id="q-${idx}">
+    <div class="q-header">
+      <span class="q-number">${idx+1}.</span>
+      <input class="q-title" value="${escAttr(q.title||'')}" placeholder="Câu hỏi" onchange="updateQField(${formId},${idx},'title',this.value)">
+      <select class="q-type" onchange="changeType(${formId},${idx},this.value)">
+        ${Object.entries(types).map(([k,v])=>`<option value="${k}" ${q.type===k?'selected':''}>${v}</option>`).join('')}</select></div>
+    <div class="q-body">${body}</div>
+    <div class="q-footer">
+      <label class="toggle"><input type="checkbox" ${q.required?'checked':''} onchange="updateQField(${formId},${idx},'required',this.checked)"> Bắt buộc</label>
+      <div class="q-actions">
+        <button onclick="moveQ(${formId},${idx},-1)" ${idx===0?'disabled':''}>⬆</button>
+        <button onclick="moveQ(${formId},${idx},1)" ${idx===totalQ-1?'disabled':''}>⬇</button>
+        <button onclick="deleteQ(${formId},${idx})">🗑</button></div></div></div>`;
+}
+
+function getForm(id) { return formsCache.find(f => f.id === id); }
+
+async function updateFormField(formId, field, val) {
+  const f = getForm(formId); if (!f) return;
+  f[field] = val; f.updated = new Date().toISOString();
+  await api('updateForm', { [field]: val }, formId);
+}
+
+async function toggleCrossLink(formId, on) {
+  const f = getForm(formId); if (!f) return;
+  f.crosslinkEnabled = on;
+  await api('updateForm', { crosslinkEnabled: on }, formId);
+  renderEditor(formId);
+}
+
+async function addQuestion(formId, type) {
+  const f = getForm(formId); if (!f) return;
+  f.questions.push({ type, title: '', required: false,
+    options: ['multiple','checkboxes','dropdown'].includes(type) ? ['Lựa chọn 1'] : [] });
+  await api('updateForm', { questions: f.questions }, formId);
+  renderEditor(formId);
+}
+
+async function deleteQ(formId, idx) {
+  const f = getForm(formId); if (!f) return;
+  f.questions.splice(idx, 1);
+  await api('updateForm', { questions: f.questions }, formId);
+  renderEditor(formId);
+}
+
+async function moveQ(formId, idx, dir) {
+  const f = getForm(formId); if (!f) return;
+  const n = idx + dir;
+  if (n<0||n>=f.questions.length) return;
+  [f.questions[idx], f.questions[n]] = [f.questions[n], f.questions[idx]];
+  await api('updateForm', { questions: f.questions }, formId);
+  renderEditor(formId);
+}
+
+async function changeType(formId, idx, t) {
+  const f = getForm(formId); if (!f) return;
+  f.questions[idx].type = t;
+  if (['multiple','checkboxes','dropdown'].includes(t) && (!f.questions[idx].options || f.questions[idx].options.length===0))
+    f.questions[idx].options = ['Lựa chọn 1'];
+  await api('updateForm', { questions: f.questions }, formId);
+  renderEditor(formId);
+}
+
+async function updateQField(formId, idx, field, val) {
+  const f = getForm(formId); if (!f) return;
+  f.questions[idx][field] = val;
+  await api('updateForm', { questions: f.questions }, formId);
+}
+
+async function updateOption(formId, qIdx, oIdx, val) {
+  const f = getForm(formId); if (!f) return;
+  f.questions[qIdx].options[oIdx] = val;
+  await api('updateForm', { questions: f.questions }, formId);
+}
+
+async function addOption(formId, qIdx) {
+  const f = getForm(formId); if (!f) return;
+  f.questions[qIdx].options.push('Lựa chọn ' + (f.questions[qIdx].options.length + 1));
+  await api('updateForm', { questions: f.questions }, formId);
+  renderEditor(formId);
+}
+
+async function removeOption(formId, qIdx, oIdx) {
+  const f = getForm(formId); if (!f) return;
+  if (f.questions[qIdx].options.length <= 1) return;
+  f.questions[qIdx].options.splice(oIdx, 1);
+  await api('updateForm', { questions: f.questions }, formId);
+  renderEditor(formId);
+}
+
+async function saveAndShare(id) {
+  copyFillLink(id);
+  location.hash = `#responses/${id}`;
+}
+
+// ==================== PREVIEW ====================
+async function renderPreview(id) {
+  showLoading();
+  const res = await api('getForm', {}, id);
+  hideLoading();
+  const form = res.form;
+  if (!form) { location.hash=''; return; }
+  
+  const app = document.getElementById('app');
+  let h = `<div class="preview-container"><div class="preview-header">
+    <h2>${escHtml(form.title||'Chưa có tiêu đề')}</h2>
+    ${form.description?`<p>${escHtml(form.description)}</p>`:''}
+    ${form.crosslinkEnabled?'<div class="crosslink-badge">🔗 Cross Link GĐV / QLKV / CH</div>':''}</div>`;
+  
+  (form.questions||[]).forEach((q,i)=>{
+    h += `<div class="preview-item"><div class="pi-number">${i+1}. ${escHtml(q.title||'Câu hỏi '+(i+1))} ${q.required?'<span class="pi-required">*</span>':''}</div>`;
+    switch(q.type){
+      case 'short': h+='<div class="pi-input">Câu trả lời ngắn</div>'; break;
+      case 'paragraph': h+='<div class="pi-input" style="min-height:60px">Câu trả lời dài</div>'; break;
+      case 'number': h+='<div class="pi-input">Nhập số...</div>'; break;
+      case 'date': h+='<div class="pi-input">dd/mm/yyyy</div>'; break;
+      case 'multiple': (q.options||[]).forEach(o=>h+=`<div style="padding:4px 0"><input type="radio" disabled> ${escHtml(o)}</div>`); break;
+      case 'checkboxes': (q.options||[]).forEach(o=>h+=`<div style="padding:4px 0"><input type="checkbox" disabled> ${escHtml(o)}</div>`); break;
+      case 'dropdown': h+='<div class="pi-input">Chọn từ danh sách ▼</div>'; break;
+    }
+    h+='</div>';
+  });
+  h += `<button class="submit-btn" onclick="location.hash='#fill/${id}'">📝 Điền thử</button></div>`;
+  app.innerHTML = h;
+}
+
+// ==================== FILL FORM (Public) ====================
+async function renderFill(id) {
+  showLoading();
+  const res = await api('getForm', {}, id);
+  await loadStores();
+  hideLoading();
+  
+  const form = res.form;
+  if (!form) { document.getElementById('app').innerHTML='<div class="empty-state"><h2>Form không tồn tại</h2></div>'; return; }
+  
+  const app = document.getElementById('app');
+  let h = `<div class="preview-container"><div class="preview-header">
+    <h2>${escHtml(form.title||'Chưa có tiêu đề')}</h2>
+    ${form.description?`<p>${escHtml(form.description)}</p>`:''}</div>`;
+  
+  if (form.crosslinkEnabled) {
+    h += `<div class="preview-item" style="background:#f0fdf4">
+      <div class="pi-number">🔗 Thông tin GĐV / QLKV / CH <span class="pi-required">*</span></div>`;
+    if (!form.crosslinkGDV) {
+      h += `<div style="margin-top:8px"><label style="font-size:13px;color:var(--muted)">GĐV:</label>
+        <select class="fill-cross-gdv" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px">
+          <option value="">-- Chọn GĐV --</option>${gdvList.map(g=>`<option>${escHtml(g)}</option>`).join('')}</select></div>`;
+    }
+    if (!form.crosslinkQLKV) {
+      h += `<div style="margin-top:8px"><label style="font-size:13px;color:var(--muted)">QLKV:</label>
+        <select class="fill-cross-qlkv" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px">
+          <option value="">-- Chọn QLKV --</option>${qlkvList.map(q=>`<option>${escHtml(q)}</option>`).join('')}</select></div>`;
+    }
+    if (!form.crosslinkCH) {
+      h += `<div style="margin-top:8px"><label style="font-size:13px;color:var(--muted)">Cửa hàng:</label>
+        <select class="fill-cross-ch" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin-top:4px">
+          <option value="">-- Chọn CH --</option>${storesCache.map(s=>`<option value="${escAttr(s.masap)}">${s.masap} - ${escHtml(s.tenCH)}</option>`).join('')}</select></div>`;
+    }
+    h += '</div>';
+  }
+  
+  (form.questions||[]).forEach((q,i)=>{
+    h += `<div class="preview-item"><div class="pi-title">${i+1}. ${escHtml(q.title||'Câu hỏi '+(i+1))} ${q.required?'<span class="pi-required">*</span>':''}</div>`;
+    switch(q.type){
+      case 'short': h+=`<input class="fill-input" data-q="${i}" style="width:100%;padding:8px;border:none;border-bottom:1px solid var(--border);font-size:14px;outline:none;margin-top:8px" placeholder="Câu trả lời">`; break;
+      case 'paragraph': h+=`<textarea class="fill-input" data-q="${i}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;margin-top:8px;min-height:80px;resize:vertical" placeholder="Câu trả lời"></textarea>`; break;
+      case 'number': h+=`<input type="number" class="fill-input" data-q="${i}" style="width:100%;padding:8px;border:none;border-bottom:1px solid var(--border);font-size:14px;outline:none;margin-top:8px" placeholder="Nhập số...">`; break;
+      case 'date': h+=`<input type="date" class="fill-input" data-q="${i}" style="width:100%;padding:8px;border:none;border-bottom:1px solid var(--border);font-size:14px;outline:none;margin-top:8px">`; break;
+      case 'multiple': (q.options||[]).forEach(o=>h+=`<div style="padding:6px 0"><label><input type="radio" class="fill-input" data-q="${i}" name="q${i}" value="${escAttr(o)}"> ${escHtml(o)}</label></div>`); break;
+      case 'checkboxes': (q.options||[]).forEach(o=>h+=`<div style="padding:6px 0"><label><input type="checkbox" class="fill-input" data-q="${i}" value="${escAttr(o)}"> ${escHtml(o)}</label></div>`); break;
+      case 'dropdown': h+=`<select class="fill-input" data-q="${i}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:14px;margin-top:8px"><option value="">-- Chọn --</option>${(q.options||[]).map(o=>`<option>${escHtml(o)}</option>`).join('')}</select>`; break;
+    }
+    h += '</div>';
+  });
+  
+  h += `<button class="submit-btn" onclick="submitForm(${id})">📤 Gửi</button>
+    <div id="submit-status" style="text-align:center;margin-top:12px;font-size:14px"></div></div>`;
+  app.innerHTML = h;
+}
+
+async function submitForm(formId) {
+  const resF = await api('getForm', {}, formId);
+  const form = resF.form;
+  if (!form) return;
+  
+  // Validate required questions
+  let err = false;
+  (form.questions||[]).forEach((q,i)=>{
+    if (!q.required) return;
+    const inputs = document.querySelectorAll(`.fill-input[data-q="${i}"]`);
+    let filled = false;
+    inputs.forEach(inp=>{
+      if (inp.type==='radio'||inp.type==='checkbox'){ if(inp.checked) filled=true; }
+      else if (inp.value && inp.value.trim()) filled=true;
+    });
+    if (!filled) { err=true; showToast(`⚠️ Câu ${i+1} là bắt buộc!`); }
+  });
+  if (err) return;
+  
+  // Validate crosslink
+  let crosslink = {};
+  if (form.crosslinkEnabled) {
+    const g = form.crosslinkGDV || document.querySelector('.fill-cross-gdv')?.value;
+    const q = form.crosslinkQLKV || document.querySelector('.fill-cross-qlkv')?.value;
+    const c = form.crosslinkCH || document.querySelector('.fill-cross-ch')?.value;
+    if (!g&&!q&&!c) { showToast('⚠️ Vui lòng chọn GĐV/QLKV/CH!'); return; }
+    crosslink = { gdv: g||'', qlkv: q||'', ch: c||'' };
+  }
+  
+  // Collect answers
+  const answers = [];
+  (form.questions||[]).forEach((q,i)=>{
+    const inputs = document.querySelectorAll(`.fill-input[data-q="${i}"]`);
+    if (q.type==='checkboxes'){
+      const vals=[]; inputs.forEach(inp=>{if(inp.checked) vals.push(inp.value);}); answers.push(vals.join('; '));
+    } else if (q.type==='multiple'){
+      let v=''; inputs.forEach(inp=>{if(inp.checked) v=inp.value;}); answers.push(v);
+    } else {
+      answers.push(inputs[0]?.value?.trim()||'');
+    }
+  });
+  
+  // Submit
+  document.querySelector('.submit-btn').disabled = true;
+  document.querySelector('.submit-btn').textContent = 'Đang gửi...';
+  const resp = await api('submitResponse', { crosslink, answers }, formId);
+  
+  const status = document.getElementById('submit-status');
+  if (resp.success) {
+    status.innerHTML = '<span style="color:var(--success)">✅ Đã gửi thành công!</span>';
+    setTimeout(()=>location.hash='', 1500);
+  } else {
+    status.innerHTML = `<span style="color:var(--danger)">❌ Lỗi: ${resp.error}</span>`;
+    document.querySelector('.submit-btn').disabled = false;
+    document.querySelector('.submit-btn').textContent = '📤 Gửi';
+  }
+}
+
+// ==================== RESPONSES ====================
+async function renderResponses(id) {
+  showLoading();
+  const [resF, resR] = await Promise.all([api('getForm',{},id), api('listResponses',{},id)]);
+  hideLoading();
+  
+  const form = resF.form;
+  const responses = resR.responses || [];
+  const app = document.getElementById('app');
+  
+  let h = `<h2 style="margin-bottom:4px">📊 ${escHtml(form?.title||'Chưa có tiêu đề')}</h2>
+    <p style="color:var(--muted);margin-bottom:20px">${responses.length} phản hồi</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+      <div class="stat-card"><div class="num">${responses.length}</div><div class="label">Tổng phản hồi</div></div>
+      <div class="stat-card"><div class="num">${(form?.questions||[]).length}</div><div class="label">Câu hỏi</div></div>
+      <div class="stat-card"><div class="num">🔗</div><div class="label">Cross Link ${form?.crosslinkEnabled?'ON':'OFF'}</div></div></div>`;
+  
+  if (responses.length===0) {
+    h += `<div class="empty-state"><p>Chưa có phản hồi nào</p>
+      <button class="btn btn-primary" onclick="location.hash='#fill/${id}'">📝 Điền thử</button></div>`;
+  } else {
+    h += `<div class="responses-wrapper"><table class="responses-table"><thead><tr><th>#</th><th>Thời gian</th>`;
+    if (form?.crosslinkEnabled) h += '<th>GĐV</th><th>QLKV</th><th>CH</th>';
+    (form?.questions||[]).forEach(q=>h+=`<th>${escHtml(q.title||'Q')}</th>`);
+    h += '</tr></thead><tbody>';
+    responses.forEach((r,ri)=>{
+      h += `<tr><td>${ri+1}</td><td>${new Date(r.timestamp).toLocaleString('vi-VN')}</td>`;
+      if (form?.crosslinkEnabled) h += `<td>${escHtml(r.crosslink?.gdv||'')}</td><td>${escHtml(r.crosslink?.qlkv||'')}</td><td>${escHtml(r.crosslink?.ch||'')}</td>`;
+      (r.answers||[]).forEach(a=>h+=`<td>${escHtml(a||'')}</td>`);
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+  app.innerHTML = h;
+}
+
+function exportCSV(id) {
+  const form = getForm(id) || formsCache.find(f=>f.id===id);
+  if (!form) return;
+  api('listResponses',{},id).then(res=>{
+    const responses = res.responses || [];
+    let csv = '\uFEFF';
+    const headers = ['#','Thời gian'];
+    if (form.crosslinkEnabled) headers.push('GĐV','QLKV','CH');
+    (form.questions||[]).forEach(q=>headers.push(q.title||('Q')));
+    csv += headers.map(h=>'"'+h+'"').join(',') + '\n';
+    responses.forEach((r,ri)=>{
+      const row = [ri+1, r.timestamp];
+      if (form.crosslinkEnabled) row.push(r.crosslink?.gdv||'', r.crosslink?.qlkv||'', r.crosslink?.ch||'');
+      (r.answers||[]).forEach(a=>row.push(a||''));
+      csv += row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',') + '\n';
+    });
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `responses_form_${id}.csv`; a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+// ==================== HELPERS ====================
+function escAttr(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showToast(msg) {
+  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 2500);
+}
+
+// Init
+(async function init() {
+  await loadStores();
+  route();
+})();
+</script>
+</body>
+</html>
