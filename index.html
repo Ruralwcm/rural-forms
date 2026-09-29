@@ -439,7 +439,7 @@ function renderCrosslinkHTML(form) {
   storesWithMien.forEach(function(s){
     if (!s.gdv || gdvShown[s.gdv]) return;
     gdvShown[s.gdv] = true;
-    h += '<label class="gdv-item" data-mien="'+s.mien+'" style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" value="'+escAttr(s.gdv)+'" class="gdv-checkbox" onchange="updateCrosslinkMulti('+id+')" '+(selectedGDV.indexOf(s.gdv)>=0?'checked':'')+'>'+escHtml(s.gdv)+' <span style="font-size:10px;color:var(--muted)">('+s.mien+')</span></label>';
+    h += '<label class="gdv-item" data-mien="'+s.mien+'" style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" value="'+escAttr(s.gdv)+'" class="gdv-checkbox" onchange="updateCrosslinkMulti('+id+')" '+(selectedGDV.indexOf(s.gdv)>=0?'checked':'')+'>'+escHtml(s.gdv)+'</label>';
   });
   h += '</div></div>';
   
@@ -449,7 +449,7 @@ function renderCrosslinkHTML(form) {
   storesWithMien.forEach(function(s){
     if (!s.qlkv || qlkvShown[s.qlkv]) return;
     qlkvShown[s.qlkv] = true;
-    h += '<label class="qlkv-item" data-mien="'+s.mien+'" style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" value="'+escAttr(s.qlkv)+'" class="qlkv-checkbox" onchange="updateCrosslinkMulti('+id+')" '+(selectedQLKV.indexOf(s.qlkv)>=0?'checked':'')+'>'+escHtml(s.qlkv)+' <span style="font-size:10px;color:var(--muted)">('+s.mien+')</span></label>';
+    h += '<label class="qlkv-item" data-mien="'+s.mien+'" style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" value="'+escAttr(s.qlkv)+'" class="qlkv-checkbox" onchange="updateCrosslinkMulti('+id+')" '+(selectedQLKV.indexOf(s.qlkv)>=0?'checked':'')+'>'+escHtml(s.qlkv)+'</label>';
   });
   h += '</div></div>';
   
