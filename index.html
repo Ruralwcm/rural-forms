@@ -456,7 +456,7 @@ function renderCrosslinkHTML(form) {
   // CH dropdown (auto-filtered by Mien/GDV/QLKV)
   h += '<div class="crosslink-row"><label>🏪 CH (tự động lọc):</label><select id="ch-select-'+id+'" onchange="updateFormField('+id+',\'crosslinkCH\',this.value)" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card)"><option value="">-- Chọn CH --</option>';
   storesCache.forEach(function(s){
-    h += '<option value="'+escAttr(s.masap)+'" data-gdv="'+escAttr(s.gdv)+'" data-qlkv="'+escAttr(s.qlkv)+'" data-mien="'+getMien(s.tinh)+'" '+(form.crosslinkCH===s.masap?'selected':'')+'>'+s.masap+' - '+escHtml(s.tenCH)+' ('+escHtml(s.gdv)+')</option>';
+    h += '<option value="'+escAttr(s.masap)+'" data-gdv="'+escAttr(s.gdv)+'" data-qlkv="'+escAttr(s.qlkv)+'" data-mien="'+getMien(s.tinh)+'" '+(form.crosslinkCH===s.masap?'selected':'')+'>'+s.masap+' - '+escHtml(s.tenCH)+'</option>';
   });
   h += '</select></div></div></div>';
   return h;
