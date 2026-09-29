@@ -434,7 +434,7 @@ function renderCrosslinkHTML(form) {
   h += '<div class="crosslink-row"><label>🌍 Vùng:</label><select id="mien-filter-'+id+'" onchange="filterCrosslinkByMien('+id+')" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card)"><option value="Tất cả">Tất cả</option><option value="Miền Bắc">Miền Bắc</option><option value="Miền Trung">Miền Trung</option><option value="Miền Nam">Miền Nam</option></select></div>';
   
   // GĐV checkboxes (filtered by mien)
-  h += '<div class="crosslink-row" style="flex-direction:column;align-items:flex-start"><label style="margin-bottom:4px">👤 GĐV (chọn nhiều):</label><div id="gdv-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card);width:100%">';
+  h += '<div class="crosslink-row" style="flex-direction:column;align-items:flex-start"><label style="margin-bottom:4px">👤 GĐV (chọn nhiều): <a href="javascript:void(0)" onclick="toggleAllGdv('+id+')" style="font-size:11px;color:var(--primary);margin-left:8px">Chọn tất cả</a></label><div id="gdv-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card);width:100%">';
   var gdvShown = {};
   storesWithMien.forEach(function(s){
     if (!s.gdv || gdvShown[s.gdv]) return;
@@ -444,7 +444,7 @@ function renderCrosslinkHTML(form) {
   h += '</div></div>';
   
   // QLKV checkboxes (filtered by mien)
-  h += '<div class="crosslink-row" style="flex-direction:column;align-items:flex-start"><label style="margin-bottom:4px">👥 QLKV (chọn nhiều):</label><div id="qlkv-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card);width:100%">';
+  h += '<div class="crosslink-row" style="flex-direction:column;align-items:flex-start"><label style="margin-bottom:4px">👥 QLKV (chọn nhiều): <a href="javascript:void(0)" onclick="toggleAllQlkv('+id+')" style="font-size:11px;color:var(--primary);margin-left:8px">Chọn tất cả</a></label><div id="qlkv-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card);width:100%">';
   var qlkvShown = {};
   storesWithMien.forEach(function(s){
     if (!s.qlkv || qlkvShown[s.qlkv]) return;
@@ -453,10 +453,10 @@ function renderCrosslinkHTML(form) {
   });
   h += '</div></div>';
   
-  // CH dropdown (chọn 1)
-  h += '<div class="crosslink-row"><label>🏪 CH:</label><select onchange="updateFormField('+id+',\'crosslinkCH\',this.value)" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card)"><option value="">-- Chọn CH (để trống cho người điền chọn) --</option>';
+  // CH dropdown (auto-filtered by Mien/GDV/QLKV)
+  h += '<div class="crosslink-row"><label>🏪 CH (tự động lọc):</label><select id="ch-select-'+id+'" onchange="updateFormField('+id+',\'crosslinkCH\',this.value)" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card)"><option value="">-- Chọn CH --</option>';
   storesCache.forEach(function(s){
-    h += '<option value="'+escAttr(s.masap)+'" '+(form.crosslinkCH===s.masap?'selected':'')+'>'+s.masap+' - '+escHtml(s.tenCH)+'</option>';
+    h += '<option value="'+escAttr(s.masap)+'" data-gdv="'+escAttr(s.gdv)+'" data-qlkv="'+escAttr(s.qlkv)+'" data-mien="'+getMien(s.tinh)+'" '+(form.crosslinkCH===s.masap?'selected':'')+'>'+s.masap+' - '+escHtml(s.tenCH)+' ('+escHtml(s.gdv)+')</option>';
   });
   h += '</select></div></div></div>';
   return h;
@@ -794,6 +794,7 @@ function filterCrosslinkByMien(formId) {
   qlkvItems.forEach(function(item){
     item.style.display = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien) ? 'flex' : 'none';
   });
+  filterCHDropdown(formId);
 }
 
 function updateCrosslinkMulti(formId) {
@@ -803,6 +804,70 @@ function updateCrosslinkMulti(formId) {
   document.querySelectorAll('.qlkv-checkbox:checked').forEach(function(c){ qlkvVals.push(c.value); });
   updateFormField(formId, 'crosslinkGDV', gdvVals.join(','));
   updateFormField(formId, 'crosslinkQLKV', qlkvVals.join(','));
+  filterCHDropdown(formId);
+}
+
+function toggleAllGdv(formId) {
+  var mien = document.getElementById('mien-filter-'+formId).value;
+  var allChecked = true;
+  var boxes = document.querySelectorAll('.gdv-checkbox');
+  // Check if all visible are checked
+  boxes.forEach(function(cb){
+    var item = cb.closest('.gdv-item');
+    if (item && (mien==='Tất cả' || item.getAttribute('data-mien')===mien)) {
+      if (!cb.checked) allChecked = false;
+    }
+  });
+  // Toggle: if all checked, uncheck all; otherwise check all visible
+  boxes.forEach(function(cb){
+    var item = cb.closest('.gdv-item');
+    if (item && (mien==='Tất cả' || item.getAttribute('data-mien')===mien)) {
+      cb.checked = !allChecked;
+    }
+  });
+  updateCrosslinkMulti(formId);
+}
+
+function toggleAllQlkv(formId) {
+  var mien = document.getElementById('mien-filter-'+formId).value;
+  var allChecked = true;
+  var boxes = document.querySelectorAll('.qlkv-checkbox');
+  boxes.forEach(function(cb){
+    var item = cb.closest('.qlkv-item');
+    if (item && (mien==='Tất cả' || item.getAttribute('data-mien')===mien)) {
+      if (!cb.checked) allChecked = false;
+    }
+  });
+  boxes.forEach(function(cb){
+    var item = cb.closest('.qlkv-item');
+    if (item && (mien==='Tất cả' || item.getAttribute('data-mien')===mien)) {
+      cb.checked = !allChecked;
+    }
+  });
+  updateCrosslinkMulti(formId);
+}
+
+function filterCHDropdown(formId) {
+  var mien = document.getElementById('mien-filter-'+formId).value;
+  var selGDV = [];
+  var selQLKV = [];
+  document.querySelectorAll('.gdv-checkbox:checked').forEach(function(c){ selGDV.push(c.value); });
+  document.querySelectorAll('.qlkv-checkbox:checked').forEach(function(c){ selQLKV.push(c.value); });
+  
+  var chSelect = document.getElementById('ch-select-'+formId);
+  if (!chSelect) return;
+  var options = chSelect.querySelectorAll('option');
+  options.forEach(function(opt, i){
+    if (i === 0) return; // Skip "Chọn CH" option
+    var optMien = opt.getAttribute('data-mien');
+    var optGdv = opt.getAttribute('data-gdv');
+    var optQlkv = opt.getAttribute('data-qlkv');
+    var show = true;
+    if (mien !== 'Tất cả' && optMien !== mien) show = false;
+    if (selGDV.length > 0 && selGDV.indexOf(optGdv) < 0) show = false;
+    if (selQLKV.length > 0 && selQLKV.indexOf(optQlkv) < 0) show = false;
+    opt.style.display = show ? '' : 'none';
+  });
 }
 
 function toggleDeadlineF(on) {
