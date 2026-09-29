@@ -140,7 +140,7 @@ async function api(action, data = {}, formId = '') {
   try {
     const res = await fetch(API_BASE, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
