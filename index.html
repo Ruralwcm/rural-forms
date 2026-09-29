@@ -132,19 +132,20 @@ function hideLoading() { document.getElementById('loading').classList.add('hidde
 
 async function api(action, data = {}, formId = '') {
   if (API_BASE === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    // Fallback to localStorage mode
     return apiLocal(action, data, formId);
   }
   
-  const body = { action, data, formId };
+  // Build URL with GET params to avoid CORS preflight
+  let url = API_BASE + '?action=' + encodeURIComponent(action) + '&formId=' + encodeURIComponent(formId);
+  if (Object.keys(data).length > 0) {
+    url += '&data=' + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(data)))));
+  }
+  
   try {
-    const res = await fetch(API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    try { return JSON.parse(text); } catch(e) { return { success: false, error: text.substring(0,100) }; }
   } catch (err) {
     console.error('API Error:', err);
     return { success: false, error: 'Không kết nối được server. ' + err.message };
