@@ -377,12 +377,12 @@ async function renderEditor(id) {
   <div style="background:#fef3c7;border:2px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:14px" id="deadline-container">
     <h3 style="font-size:14px;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px">⏰ Thời gian hiệu lực</h3>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
-      '+(form.deadline?'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)" checked>':'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">')+'
+      ${form.deadline ? '<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)" checked>' : '<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">'}
       <span style="font-size:13px">Giới hạn thời gian điền form (Cutoff Time)</span>
     </label>
-    '+('<div id="deadline-picker" style="display:'+(form.deadline?'block':'none')+'">')+'
+    <div id="deadline-picker" style="display:${form.deadline ? 'block' : 'none'}">
       <label style="font-size:12px;color:var(--muted)">Hạn chót:</label>
-      <input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" onchange="updateDeadlineF(this.value)">
+      <input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" value="${form.deadline||''}" onchange="updateDeadlineF(this.value)">
     </div>
   </div>
   <div id="questions-container">`;
