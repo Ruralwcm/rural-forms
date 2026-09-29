@@ -377,10 +377,10 @@ async function renderEditor(id) {
   <div style="background:#fef3c7;border:2px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:14px" id="deadline-container">
     <h3 style="font-size:14px;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px">⏰ Thời gian hiệu lực</h3>
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
-      <input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">
+      '+(form.deadline?'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)" checked>':'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">')+'
       <span style="font-size:13px">Giới hạn thời gian điền form (Cutoff Time)</span>
     </label>
-    <div id="deadline-picker" style="display:none">
+    '+('<div id="deadline-picker" style="display:'+(form.deadline?'block':'none')+'">')+'
       <label style="font-size:12px;color:var(--muted)">Hạn chót:</label>
       <input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" onchange="updateDeadlineF(this.value)">
     </div>
@@ -401,19 +401,7 @@ async function renderEditor(id) {
     <button class="btn btn-outline" onclick="location.hash='#preview/${id}'">👁 Xem trước</button>
     <button class="btn btn-primary" onclick="saveAndShare(${id})">💾 Lưu & Share</button></div>`;
   app.innerHTML = h;
-  // Initialize deadline UI
-  setTimeout(function(){
-    var dt = document.getElementById('deadline-toggle');
-    var dp = document.getElementById('deadline-picker');
-    var di = document.getElementById('deadline-input');
-    if (dt && dp && di) {
-      if (form.deadline) {
-        dt.checked = true;
-        dp.style.display = 'block';
-        di.value = form.deadline.replace(' ', 'T').substring(0,16);
-      }
-    }
-  }, 100);
+
 }
 
 function renderQuestion(q, idx, formId) {
