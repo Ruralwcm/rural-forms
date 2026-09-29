@@ -480,15 +480,19 @@ function buildEditorHTML(form) {
 }
 
 // Background API save (non-blocking)
+var _saveTimer = null;
 function saveFormBg(formId) {
-  const form = getForm(formId);
-  if (!form) return;
-  api('updateForm', {
-    title: form.title, description: form.description,
-    crosslinkEnabled: form.crosslinkEnabled,
-    crosslinkGDV: form.crosslinkGDV, crosslinkQLKV: form.crosslinkQLKV, crosslinkCH: form.crosslinkCH,
-    questions: form.questions, deadline: form.deadline
-  }, formId);
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function(){
+    const form = getForm(formId);
+    if (!form) return;
+    api('updateForm', {
+      title: form.title, description: form.description,
+      crosslinkEnabled: form.crosslinkEnabled,
+      crosslinkGDV: form.crosslinkGDV, crosslinkQLKV: form.crosslinkQLKV, crosslinkCH: form.crosslinkCH,
+      questions: form.questions, deadline: form.deadline
+    }, formId);
+  }, 500);
 }
 
 async function updateFormField(formId, field, val) {
@@ -551,17 +555,40 @@ async function updateOption(formId, qIdx, oIdx, val) {
 
 async function addOption(formId, qIdx) {
   const f = getForm(formId); if (!f) return;
-  f.questions[qIdx].options.push('Lựa chọn ' + (f.questions[qIdx].options.length + 1));
-  await api('updateForm', { questions: f.questions }, formId);
-  renderEditorFast(formId);
+  var newOpt = 'Lựa chọn ' + (f.questions[qIdx].options.length + 1);
+  f.questions[qIdx].options.push(newOpt);
+  // DOM-only update - fast!
+  var container = document.getElementById('options-'+qIdx);
+  if (container) {
+    var oi = f.questions[qIdx].options.length - 1;
+    var row = document.createElement('div');
+    row.className = 'option-row';
+    row.innerHTML = '<span class="opt-num">'+(oi+1)+'.</span><input value="'+escAttr(newOpt)+'" onchange="updateOption('+formId+','+qIdx+','+oi+',this.value)" placeholder="Lựa chọn '+(oi+1)+'"><span class="remove-opt" onclick="removeOption('+formId+','+qIdx+','+oi+')">✕</span>';
+    container.appendChild(row);
+  }
+  saveFormBg(formId);
 }
 
 async function removeOption(formId, qIdx, oIdx) {
   const f = getForm(formId); if (!f) return;
   if (f.questions[qIdx].options.length <= 1) return;
   f.questions[qIdx].options.splice(oIdx, 1);
-  await api('updateForm', { questions: f.questions }, formId);
-  renderEditorFast(formId);
+  // DOM-only update - fast!
+  var container = document.getElementById('options-'+qIdx);
+  if (container) {
+    var rows = container.querySelectorAll('.option-row');
+    if (rows[oIdx]) rows[oIdx].remove();
+    // Renumber remaining
+    var remaining = container.querySelectorAll('.option-row');
+    remaining.forEach(function(row, i){
+      row.querySelector('.opt-num').textContent = (i+1)+'.';
+      var inp = row.querySelector('input');
+      var rm = row.querySelector('.remove-opt');
+      inp.setAttribute('onchange', 'updateOption('+formId+','+qIdx+','+i+',this.value)');
+      rm.setAttribute('onclick', 'removeOption('+formId+','+qIdx+','+i+')');
+    });
+  }
+  saveFormBg(formId);
 }
 
 async function saveAndShare(id) {
