@@ -108,7 +108,7 @@ header nav { display:flex; gap:8px; }
 </head>
 <body>
 <header>
-  <h1>📋 Rural Forms</h1>
+  <h1>📋 Rural Forms <span class="ver">V2.2</span></h1>
   <nav id="nav-bar"></nav>
 </header>
 <div class="container" id="app"></div>
@@ -124,6 +124,7 @@ let formsCache = [];
 let storesCache = [];
 let gdvList = [];
 let qlkvList = [];
+let currentEditingFormId = null;
 let currentView = '';
 
 // ==================== API HELPERS ====================
@@ -372,6 +373,18 @@ async function renderEditor(id) {
         <select onchange="updateFormField(${id},'crosslinkCH',this.value)">
           <option value="">-- Chọn CH (để trống cho người điền chọn) --</option>
           ${storesCache.map(s=>`<option value="${escAttr(s.masap)}" ${form.crosslinkCH===s.masap?'selected':''}>${s.masap} - ${escHtml(s.tenCH)}</option>`).join('')}</select></div></div></div>
+  <!-- Deadline Section -->
+  <div style="background:#fef3c7;border:2px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:14px" id="deadline-container">
+    <h3 style="font-size:14px;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px">⏰ Thời gian hiệu lực</h3>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
+      <input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">
+      <span style="font-size:13px">Giới hạn thời gian điền form (Cutoff Time)</span>
+    </label>
+    <div id="deadline-picker" style="display:none">
+      <label style="font-size:12px;color:var(--muted)">Hạn chót:</label>
+      <input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" onchange="updateDeadlineF(this.value)">
+    </div>
+  </div>
   <div id="questions-container">`;
   
   (form.questions||[]).forEach((q, idx) => { h += renderQuestion(q, idx, id); });
@@ -388,6 +401,19 @@ async function renderEditor(id) {
     <button class="btn btn-outline" onclick="location.hash='#preview/${id}'">👁 Xem trước</button>
     <button class="btn btn-primary" onclick="saveAndShare(${id})">💾 Lưu & Share</button></div>`;
   app.innerHTML = h;
+  // Initialize deadline UI
+  setTimeout(function(){
+    var dt = document.getElementById('deadline-toggle');
+    var dp = document.getElementById('deadline-picker');
+    var di = document.getElementById('deadline-input');
+    if (dt && dp && di) {
+      if (form.deadline) {
+        dt.checked = true;
+        dp.style.display = 'block';
+        di.value = form.deadline.replace(' ', 'T').substring(0,16);
+      }
+    }
+  }, 100);
 }
 
 function renderQuestion(q, idx, formId) {
@@ -540,6 +566,15 @@ async function renderFill(id) {
   
   const form = res.form;
   if (!form) { document.getElementById('app').innerHTML='<div class="empty-state"><h2>Form không tồn tại</h2></div>'; return; }
+  
+  // Check deadline
+  if (form.deadline) {
+    var dl = new Date(form.deadline.replace(' ','T'));
+    if (dl < new Date()) {
+      document.getElementById('app').innerHTML = '<div class="empty-state"><h2>⏰ Form đã đóng</h2><p>Hạn chót: '+new Date(form.deadline).toLocaleString('vi-VN')+'</p></div>';
+      return;
+    }
+  }
   
   const app = document.getElementById('app');
   let h = `<div class="preview-container"><div class="preview-header">
