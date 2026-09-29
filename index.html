@@ -108,7 +108,7 @@ header nav { display:flex; gap:8px; }
 </head>
 <body>
 <header>
-  <h1>📋 Rural Forms <span class="ver">V2.3</span></h1>
+  <h1>📋 Rural Forms <span class="ver">V2.5</span></h1>
   <nav id="nav-bar"></nav>
 </header>
 <div class="container" id="app"></div>
@@ -342,79 +342,33 @@ function copyFillLink(id) {
 // ==================== FORM EDITOR ====================
 async function renderEditor(id) {
   showLoading();
-  let res = await api('getForm', {}, id);
-  if (!res.success || !res.form) { hideLoading(); showToast('Form không tồn tại'); location.hash=''; return; }
-  const form = res.form;
-  if (!form.crosslinkEnabled) form.crosslinkEnabled = true; // default
-  
+  var form = getForm(id);
+  if (!form) {
+    var res = await api('getForm', {}, id);
+    if (!res.success || !res.form) { hideLoading(); showToast('Form không tồn tại'); location.hash=''; return; }
+    form = res.form;
+    if (!formsCache.find(function(f){return f.id===form.id;})) formsCache.push(form);
+  }
+  currentEditingFormId = id;
+  if (!form.crosslinkEnabled) form.crosslinkEnabled = true;
   await loadStores();
   hideLoading();
   
-  const app = document.getElementById('app');
-  let h = `<div class="editor-header">
-    <input class="title" value="${escAttr(form.title)}" placeholder="Tiêu đề Form" onchange="updateFormField(${id},'title',this.value)">
-    <input class="desc" value="${escAttr(form.description||'')}" placeholder="Mô tả Form" onchange="updateFormField(${id},'description',this.value)"></div>
-    
-  <div class="crosslink-section">
-    <h3>🔗 Cross Link — Liên kết GĐV / QLKV / CH</h3>
-    <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer">
-      <input type="checkbox" ${form.crosslinkEnabled?'checked':''} onchange="toggleCrossLink(${id},this.checked)">
-      <span style="font-size:14px">Bật Cross Link (mỗi response gắn với GĐV/QLKV/CH cụ thể)</span></label>
-    <div id="crosslink-fields" class="${form.crosslinkEnabled?'':'hidden'}">
-      <div class="crosslink-row"><label>GĐV:</label>
-        <select onchange="updateFormField(${id},'crosslinkGDV',this.value)">
-          <option value="">-- Chọn GĐV (để trống cho người điền chọn) --</option>
-          ${gdvList.map(g=>`<option value="${escAttr(g)}" ${form.crosslinkGDV===g?'selected':''}>${g}</option>`).join('')}</select></div>
-      <div class="crosslink-row"><label>QLKV:</label>
-        <select onchange="updateFormField(${id},'crosslinkQLKV',this.value)">
-          <option value="">-- Chọn QLKV (để trống cho người điền chọn) --</option>
-          ${qlkvList.map(q=>`<option value="${escAttr(q)}" ${form.crosslinkQLKV===q?'selected':''}>${q}</option>`).join('')}</select></div>
-      <div class="crosslink-row"><label>CH:</label>
-        <select onchange="updateFormField(${id},'crosslinkCH',this.value)">
-          <option value="">-- Chọn CH (để trống cho người điền chọn) --</option>
-          ${storesCache.map(s=>`<option value="${escAttr(s.masap)}" ${form.crosslinkCH===s.masap?'selected':''}>${s.masap} - ${escHtml(s.tenCH)}</option>`).join('')}</select></div></div></div>
-  <!-- Deadline Section -->
-  <div style="background:#fef3c7;border:2px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:14px" id="deadline-container">
-    <h3 style="font-size:14px;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px">⏰ Thời gian hiệu lực</h3>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
-      ${form.deadline ? '<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)" checked>' : '<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">'}
-      <span style="font-size:13px">Giới hạn thời gian điền form (Cutoff Time)</span>
-    </label>
-    <div id="deadline-picker" style="display:${form.deadline ? 'block' : 'none'}">
-      <label style="font-size:12px;color:var(--muted)">Hạn chót:</label>
-      <input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" value="${form.deadline||''}" onchange="updateDeadlineF(this.value)">
-    </div>
-  </div>
-  <div id="questions-container">`;
-  
-  (form.questions||[]).forEach((q, idx) => { h += renderQuestion(q, idx, id); });
-  h += `</div>
-  <div class="add-question-bar">
-    <button onclick="addQuestion(${id},'short')">✏️ Trả lời ngắn</button>
-    <button onclick="addQuestion(${id},'paragraph')">📝 Đoạn văn</button>
-    <button onclick="addQuestion(${id},'multiple')">☑️ Trắc nghiệm</button>
-    <button onclick="addQuestion(${id},'checkboxes')">✅ Checkboxes</button>
-    <button onclick="addQuestion(${id},'dropdown')">📋 Dropdown</button>
-    <button onclick="addQuestion(${id},'date')">📅 Ngày</button>
-    <button onclick="addQuestion(${id},'number')">🔢 Số</button></div>
-  <div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;padding-bottom:40px">
-    <button class="btn btn-outline" onclick="location.hash='#preview/${id}'">👁 Xem trước</button>
-    <button class="btn btn-primary" onclick="saveAndShare(${id})">💾 Lưu & Share</button></div>`;
-  app.innerHTML = h;
-
+  var h = buildEditorHTML(form);
+  document.getElementById('app').innerHTML = h;
 }
 
 function renderQuestion(q, idx, formId) {
   const types = {short:'Trả lời ngắn',paragraph:'Đoạn văn',multiple:'Trắc nghiệm',checkboxes:'Checkboxes',dropdown:'Dropdown',date:'Ngày',number:'Số'};
   let body = '';
   if (['multiple','checkboxes','dropdown'].includes(q.type)) {
-    body += `<div id="options-${idx}">`;
-    (q.options||['Lựa chọn 1']).forEach((opt, oi) => {
-      body += `<div class="option-row"><span class="opt-num">${oi+1}.</span>
-        <input value="${escAttr(opt)}" onchange="updateOption(${formId},${idx},${oi},this.value)" placeholder="Lựa chọn ${oi+1}">
-        <span class="remove-opt" onclick="removeOption(${formId},${idx},${oi})">✕</span></div>`;
+    body += '<div id="options-'+idx+'">';
+    (q.options||['Lựa chọn 1']).forEach(function(opt, oi) {
+      body += '<div class="option-row"><span class="opt-num">'+(oi+1)+'.</span>';
+      body += '<input value="'+escAttr(opt)+'" onchange="updateOption('+formId+','+idx+','+oi+',this.value)" placeholder="Lựa chọn '+(oi+1)+'">';
+      body += '<span class="remove-opt" onclick="removeOption('+formId+','+idx+','+oi+')">✕</span></div>';
     });
-    body += `</div><span class="add-option" onclick="addOption(${formId},${idx})">+ Thêm lựa chọn</span>`;
+    body += '</div><span class="add-option" onclick="addOption('+formId+','+idx+')">+ Thêm lựa chọn</span>';
   }
   const form = formsCache.find(f => f.id === formId);
   const totalQ = form ? (form.questions||[]).length : 0;
@@ -445,11 +399,74 @@ function renderEditorFast(formId) {
   app.innerHTML = h;
 }
 
-function buildEditorHTML(form) {
-  const id = form.id;
-  let h = '<div class="editor-header"><input class="title" value="'+escAttr(form.title)+'" placeholder="Tiêu đề Form" onchange="updateFormField('+id+',\'title\',this.value)"><input class="desc" value="'+escAttr(form.description||'')+'" placeholder="Mô tả Form" onchange="updateFormField('+id+',\'description\',this.value)"></div>';
+function renderCrosslinkHTML(form) {
+  var id = form.id;
+  var selectedGDV = (form.crosslinkGDV||'').split(',').filter(Boolean);
+  var selectedQLKV = (form.crosslinkQLKV||'').split(',').filter(Boolean);
+  var clEnabled = form.crosslinkEnabled !== false;
   
-  h += '<div class="crosslink-section"><h3>🔗 Cross Link — Liên kết GĐV / QLKV / CH</h3><label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer"><input type="checkbox" '+(form.crosslinkEnabled?'checked':'')+' onchange="toggleCrossLink('+id+',this.checked)"><span style="font-size:13px">Bật Cross Link</span></label><div id="crosslink-fields" class="'+(form.crosslinkEnabled?'':'hidden')+'"><div class="crosslink-row"><label>GĐV:</label><select onchange="updateFormField('+id+',\'crosslinkGDV\',this.value)"><option value="">-- Chọn GĐV --</option>'+gdvList.map(g=>'<option value="'+escAttr(g)+'" '+(form.crosslinkGDV===g?'selected':'')+'>'+g+'</option>').join('')+'</select></div><div class="crosslink-row"><label>QLKV:</label><select onchange="updateFormField('+id+',\'crosslinkQLKV\',this.value)"><option value="">-- Chọn QLKV --</option>'+qlkvList.map(q=>'<option value="'+escAttr(q)+'" '+(form.crosslinkQLKV===q?'selected':'')+'>'+q+'</option>').join('')+'</select></div><div class="crosslink-row"><label>CH:</label><select onchange="updateFormField('+id+',\'crosslinkCH\',this.value)"><option value="">-- Chọn CH --</option>'+storesCache.map(s=>'<option value="'+escAttr(s.masap)+'" '+(form.crosslinkCH===s.masap?'selected':'')+'>'+s.masap+' - '+escHtml(s.tenCH)+'</option>').join('')+'</select></div></div></div>';
+  // Get unique Miền values from stores
+  var miens = ['Tất cả'];
+  var mienSet = {};
+  storesCache.forEach(function(s){ if(s.tinh && !mienSet[s.tinh]){ mienSet[s.tinh] = true; } });
+  // Group by region
+  var mbProvinces = ['TP. Hà Nội','TP. Hải Phòng','TP. Hạ Long','Bắc Ninh','Bắc Giang','Hưng Yên','Hải Dương','Vĩnh Phúc','Thái Nguyên','Thái Bình','Nam Định','Ninh Bình','Hà Nam','Phú Thọ','Tuyên Quang','Hòa Bình','Sơn La','Điện Biên','Lai Châu','Lào Cai','Yên Bái','Hà Giang','Cao Bằng','Bắc Kạn','Lạng Sơn','Quảng Ninh'];
+  var mtProvinces = ['TP. Đà Nẵng','Thanh Hóa','Nghệ An','Hà Tĩnh','Quảng Bình','Quảng Trị','Thừa Thiên Huế','Quảng Nam','Quảng Ngãi','Bình Định','Phú Yên','Khánh Hòa','Ninh Thuận','Bình Thuận','Kon Tum','Gia Lai','Đắk Lắk','Đắk Nông','Lâm Đồng'];
+  var mnProvinces = ['TP. Hồ Chí Minh','Bình Dương','Bình Phước','Tây Ninh','Đồng Nai','Bà Rịa - Vũng Tàu','Long An','Tiền Giang','Bến Tre','Vĩnh Long','Trà Vinh','Đồng Tháp','An Giang','Kiên Giang','Cần Thơ','Hậu Giang','Sóc Trăng','Bạc Liêu','Cà Mau','Tp. Hồ Chí Minh'];
+  
+  function getMien(tinh) {
+    if (mbProvinces.indexOf(tinh) >= 0) return 'Miền Bắc';
+    if (mtProvinces.indexOf(tinh) >= 0) return 'Miền Trung';
+    if (mnProvinces.indexOf(tinh) >= 0) return 'Miền Nam';
+    return 'Khác';
+  }
+  
+  // Build stores with Miền info
+  var storesWithMien = storesCache.map(function(s){
+    return { masap: s.masap, tenCH: s.tenCH, qlkv: s.qlkv, gdv: s.gdv, tinh: s.tinh, mien: getMien(s.tinh) };
+  });
+  
+  var h = '<div class="crosslink-section"><h3>🔗 Cross Link — Liên kết GĐV / QLKV / CH</h3>';
+  h += '<label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer"><input type="checkbox" '+(clEnabled?'checked':'')+' onchange="toggleCrossLink('+id+',this.checked)"><span style="font-size:13px">Bật Cross Link</span></label>';
+  h += '<div id="crosslink-fields" class="'+(clEnabled?'':'hidden')+'">';
+  
+  // Miền filter
+  h += '<div class="crosslink-row"><label>🌍 Vùng:</label><select id="mien-filter-'+id+'" onchange="filterCrosslinkByMien('+id+')" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card)"><option value="Tất cả">Tất cả</option><option value="Miền Bắc">Miền Bắc</option><option value="Miền Trung">Miền Trung</option><option value="Miền Nam">Miền Nam</option></select></div>';
+  
+  // GĐV checkboxes (filtered by mien)
+  h += '<div class="crosslink-row" style="flex-direction:column;align-items:flex-start"><label style="margin-bottom:4px">👤 GĐV (chọn nhiều):</label><div id="gdv-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card);width:100%">';
+  var gdvShown = {};
+  storesWithMien.forEach(function(s){
+    if (!s.gdv || gdvShown[s.gdv]) return;
+    gdvShown[s.gdv] = true;
+    h += '<label class="gdv-item" data-mien="'+s.mien+'" style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" value="'+escAttr(s.gdv)+'" class="gdv-checkbox" onchange="updateCrosslinkMulti('+id+')" '+(selectedGDV.indexOf(s.gdv)>=0?'checked':'')+'>'+escHtml(s.gdv)+' <span style="font-size:10px;color:var(--muted)">('+s.mien+')</span></label>';
+  });
+  h += '</div></div>';
+  
+  // QLKV checkboxes (filtered by mien)
+  h += '<div class="crosslink-row" style="flex-direction:column;align-items:flex-start"><label style="margin-bottom:4px">👥 QLKV (chọn nhiều):</label><div id="qlkv-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card);width:100%">';
+  var qlkvShown = {};
+  storesWithMien.forEach(function(s){
+    if (!s.qlkv || qlkvShown[s.qlkv]) return;
+    qlkvShown[s.qlkv] = true;
+    h += '<label class="qlkv-item" data-mien="'+s.mien+'" style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" value="'+escAttr(s.qlkv)+'" class="qlkv-checkbox" onchange="updateCrosslinkMulti('+id+')" '+(selectedQLKV.indexOf(s.qlkv)>=0?'checked':'')+'>'+escHtml(s.qlkv)+' <span style="font-size:10px;color:var(--muted)">('+s.mien+')</span></label>';
+  });
+  h += '</div></div>';
+  
+  // CH dropdown (chọn 1)
+  h += '<div class="crosslink-row"><label>🏪 CH:</label><select onchange="updateFormField('+id+',\'crosslinkCH\',this.value)" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card)"><option value="">-- Chọn CH (để trống cho người điền chọn) --</option>';
+  storesCache.forEach(function(s){
+    h += '<option value="'+escAttr(s.masap)+'" '+(form.crosslinkCH===s.masap?'selected':'')+'>'+s.masap+' - '+escHtml(s.tenCH)+'</option>';
+  });
+  h += '</select></div></div></div>';
+  return h;
+}
+
+function buildEditorHTML(form) {
+  var id = form.id;
+  var h = '<div class="editor-header"><input class="title" value="'+escAttr(form.title)+'" placeholder="Tiêu đề Form" onchange="updateFormField('+id+',\'title\',this.value)"><input class="desc" value="'+escAttr(form.description||'')+'" placeholder="Mô tả Form" onchange="updateFormField('+id+',\'description\',this.value)"></div>';
+  
+  h += renderCrosslinkHTML(form);
   
   h += '<div style="background:#fef3c7;border:2px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:14px"><h3 style="font-size:14px;color:#92400e;margin-bottom:8px">⏰ Thời gian hiệu lực</h3><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">'+(form.deadline?'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)" checked>':'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">')+'<span style="font-size:13px">Giới hạn thời gian điền form (Cutoff Time)</span></label><div id="deadline-picker" style="display:'+(form.deadline?'block':'none')+'"><label style="font-size:12px;color:var(--muted)">Hạn chót:</label><input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" value="'+(form.deadline||'')+'" onchange="updateDeadlineF(this.value)"></div></div>';
   
@@ -484,7 +501,7 @@ async function toggleCrossLink(formId, on) {
   const f = getForm(formId); if (!f) return;
   f.crosslinkEnabled = on;
   await api('updateForm', { crosslinkEnabled: on }, formId);
-  renderEditor(formId);
+  renderEditorFast(formId);
 }
 
 async function addQuestion(formId, type) {
@@ -492,14 +509,14 @@ async function addQuestion(formId, type) {
   f.questions.push({ type, title: '', required: false,
     options: ['multiple','checkboxes','dropdown'].includes(type) ? ['Lựa chọn 1'] : [] });
   await api('updateForm', { questions: f.questions }, formId);
-  renderEditor(formId);
+  renderEditorFast(formId);
 }
 
 async function deleteQ(formId, idx) {
   const f = getForm(formId); if (!f) return;
   f.questions.splice(idx, 1);
   await api('updateForm', { questions: f.questions }, formId);
-  renderEditor(formId);
+  renderEditorFast(formId);
 }
 
 async function moveQ(formId, idx, dir) {
@@ -508,7 +525,7 @@ async function moveQ(formId, idx, dir) {
   if (n<0||n>=f.questions.length) return;
   [f.questions[idx], f.questions[n]] = [f.questions[n], f.questions[idx]];
   await api('updateForm', { questions: f.questions }, formId);
-  renderEditor(formId);
+  renderEditorFast(formId);
 }
 
 async function changeType(formId, idx, t) {
@@ -517,7 +534,7 @@ async function changeType(formId, idx, t) {
   if (['multiple','checkboxes','dropdown'].includes(t) && (!f.questions[idx].options || f.questions[idx].options.length===0))
     f.questions[idx].options = ['Lựa chọn 1'];
   await api('updateForm', { questions: f.questions }, formId);
-  renderEditor(formId);
+  renderEditorFast(formId);
 }
 
 async function updateQField(formId, idx, field, val) {
@@ -536,7 +553,7 @@ async function addOption(formId, qIdx) {
   const f = getForm(formId); if (!f) return;
   f.questions[qIdx].options.push('Lựa chọn ' + (f.questions[qIdx].options.length + 1));
   await api('updateForm', { questions: f.questions }, formId);
-  renderEditor(formId);
+  renderEditorFast(formId);
 }
 
 async function removeOption(formId, qIdx, oIdx) {
@@ -544,7 +561,7 @@ async function removeOption(formId, qIdx, oIdx) {
   if (f.questions[qIdx].options.length <= 1) return;
   f.questions[qIdx].options.splice(oIdx, 1);
   await api('updateForm', { questions: f.questions }, formId);
-  renderEditor(formId);
+  renderEditorFast(formId);
 }
 
 async function saveAndShare(id) {
@@ -767,6 +784,37 @@ function exportCSV(id) {
 // ==================== HELPERS ====================
 function escAttr(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function filterCrosslinkByMien(formId) {
+  var mien = document.getElementById('mien-filter-'+formId).value;
+  var gdvItems = document.querySelectorAll('.gdv-item');
+  var qlkvItems = document.querySelectorAll('.qlkv-item');
+  gdvItems.forEach(function(item){
+    item.style.display = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien) ? 'flex' : 'none';
+  });
+  qlkvItems.forEach(function(item){
+    item.style.display = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien) ? 'flex' : 'none';
+  });
+}
+
+function updateCrosslinkMulti(formId) {
+  var gdvVals = [];
+  var qlkvVals = [];
+  document.querySelectorAll('.gdv-checkbox:checked').forEach(function(c){ gdvVals.push(c.value); });
+  document.querySelectorAll('.qlkv-checkbox:checked').forEach(function(c){ qlkvVals.push(c.value); });
+  updateFormField(formId, 'crosslinkGDV', gdvVals.join(','));
+  updateFormField(formId, 'crosslinkQLKV', qlkvVals.join(','));
+}
+
+function toggleDeadlineF(on) {
+  var dp = document.getElementById('deadline-picker');
+  if (dp) dp.style.display = on ? 'block' : 'none';
+  if (!on && currentEditingFormId) updateFormField(currentEditingFormId, 'deadline', '');
+}
+
+function updateDeadlineF(val) {
+  if (currentEditingFormId) updateFormField(currentEditingFormId, 'deadline', val);
+}
+
 function showToast(msg) {
   const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
   document.body.appendChild(t); setTimeout(()=>t.remove(), 2500);
