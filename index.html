@@ -212,6 +212,7 @@ async function loadStores() {
       masap: headers.indexOf('"Mã SAP"'),
       tenCH: headers.indexOf('"Tên cửa hàng"'),
       tinhTrang: headers.indexOf('"Tình Trạng"'),
+      mien: headers.indexOf('"Miền"'),
       qlkv: headers.indexOf('"QLKV"'),
       gdv: headers.indexOf('"GĐV"'),
       tinh: headers.indexOf('"Tỉnh/TP"')
@@ -222,7 +223,8 @@ async function loadStores() {
       if (cleanCSV(row[idx.tinhTrang]) !== 'Đang hoạt động') continue;
       const s = {
         masap: cleanCSV(row[idx.masap]), tenCH: cleanCSV(row[idx.tenCH]),
-        qlkv: cleanCSV(row[idx.qlkv]), gdv: cleanCSV(row[idx.gdv]), tinh: cleanCSV(row[idx.tinh])
+        qlkv: cleanCSV(row[idx.qlkv]), gdv: cleanCSV(row[idx.gdv]), tinh: cleanCSV(row[idx.tinh]),
+        mien: cleanCSV(row[idx.mien])
       };
       storesCache.push(s);
       if (s.gdv) gSet.add(s.gdv);
@@ -406,24 +408,12 @@ function renderCrosslinkHTML(form) {
   var clEnabled = form.crosslinkEnabled !== false;
   
   // Get unique Miền values from stores
-  var miens = ['Tất cả'];
   var mienSet = {};
-  storesCache.forEach(function(s){ if(s.tinh && !mienSet[s.tinh]){ mienSet[s.tinh] = true; } });
-  // Group by region
-  var mbProvinces = ['TP. Hà Nội','TP. Hải Phòng','TP. Hạ Long','Bắc Ninh','Bắc Giang','Hưng Yên','Hải Dương','Vĩnh Phúc','Thái Nguyên','Thái Bình','Nam Định','Ninh Bình','Hà Nam','Phú Thọ','Tuyên Quang','Hòa Bình','Sơn La','Điện Biên','Lai Châu','Lào Cai','Yên Bái','Hà Giang','Cao Bằng','Bắc Kạn','Lạng Sơn','Quảng Ninh'];
-  var mtProvinces = ['TP. Đà Nẵng','Thanh Hóa','Nghệ An','Hà Tĩnh','Quảng Bình','Quảng Trị','Thừa Thiên Huế','Quảng Nam','Quảng Ngãi','Bình Định','Phú Yên','Khánh Hòa','Ninh Thuận','Bình Thuận','Kon Tum','Gia Lai','Đắk Lắk','Đắk Nông','Lâm Đồng'];
-  var mnProvinces = ['TP. Hồ Chí Minh','Bình Dương','Bình Phước','Tây Ninh','Đồng Nai','Bà Rịa - Vũng Tàu','Long An','Tiền Giang','Bến Tre','Vĩnh Long','Trà Vinh','Đồng Tháp','An Giang','Kiên Giang','Cần Thơ','Hậu Giang','Sóc Trăng','Bạc Liêu','Cà Mau','Tp. Hồ Chí Minh'];
+  storesCache.forEach(function(s){ if(s.mien) mienSet[s.mien]=true; });
+  var mienList = Object.keys(mienSet).sort();
   
-  function getMien(tinh) {
-    if (mbProvinces.indexOf(tinh) >= 0) return 'Miền Bắc';
-    if (mtProvinces.indexOf(tinh) >= 0) return 'Miền Trung';
-    if (mnProvinces.indexOf(tinh) >= 0) return 'Miền Nam';
-    return 'Khác';
-  }
-  
-  // Build stores with Miền info
   var storesWithMien = storesCache.map(function(s){
-    return { masap: s.masap, tenCH: s.tenCH, qlkv: s.qlkv, gdv: s.gdv, tinh: s.tinh, mien: getMien(s.tinh) };
+    return { masap: s.masap, tenCH: s.tenCH, qlkv: s.qlkv, gdv: s.gdv, tinh: s.tinh, mien: s.mien || 'Khác' };
   });
   
   var h = '<div class="crosslink-section"><h3>🔗 Cross Link — Liên kết GĐV / QLKV / CH</h3>';
