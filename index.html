@@ -814,10 +814,18 @@ function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function filterCrosslinkByMien(formId) {
   var mien = document.getElementById('mien-filter-'+formId).value;
   var gdvItems = document.querySelectorAll('.gdv-item');
+  
+  // Show/hide GĐV and UNCHECK hidden ones
   gdvItems.forEach(function(item){
-    item.style.display = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien) ? 'flex' : 'none';
+    var show = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien);
+    item.style.display = show ? 'flex' : 'none';
+    if (!show) {
+      var cb = item.querySelector('.gdv-checkbox');
+      if (cb) cb.checked = false;
+    }
   });
-  // Re-trigger GĐV→QLKV cascade
+  
+  // Cascade: uncheck QLKV not matching remaining GĐV
   updateCrosslinkMulti(formId);
 }
 
@@ -829,26 +837,27 @@ function updateCrosslinkMulti(formId) {
   updateFormField(formId, 'crosslinkGDV', gdvVals.join(','));
   updateFormField(formId, 'crosslinkQLKV', qlkvVals.join(','));
   
-  // Auto-filter QLKV by selected GĐV
+  // Auto-filter QLKV by selected GĐV (also uncheck invalid ones)
   var mien = document.getElementById('mien-filter-'+formId).value;
   var qlkvItems = document.querySelectorAll('.qlkv-item');
   if (gdvVals.length > 0) {
-    // Get QLKV set for selected GĐVs
     var validQlkv = {};
     storesCache.forEach(function(s){
       if (gdvVals.indexOf(s.gdv) >= 0 && s.qlkv) validQlkv[s.qlkv] = true;
     });
     qlkvItems.forEach(function(item){
-      var qlkvCheckbox = item.querySelector('.qlkv-checkbox');
-      var qlkvName = qlkvCheckbox ? qlkvCheckbox.value : '';
+      var cb = item.querySelector('.qlkv-checkbox');
+      var qlkvName = cb ? cb.value : '';
       var inMien = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien);
       var inGdv = validQlkv[qlkvName];
-      item.style.display = (inMien && inGdv) ? 'flex' : 'none';
+      var show = inMien && inGdv;
+      item.style.display = show ? 'flex' : 'none';
+      if (!show && cb) cb.checked = false; // Uncheck hidden
     });
   } else {
-    // No GĐV selected: show all QLKV in current Mien
     qlkvItems.forEach(function(item){
-      item.style.display = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien) ? 'flex' : 'none';
+      var inMien = (mien === 'Tất cả' || item.getAttribute('data-mien') === mien);
+      item.style.display = inMien ? 'flex' : 'none';
     });
   }
   
