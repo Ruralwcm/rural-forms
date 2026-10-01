@@ -593,6 +593,7 @@ async function saveAndShare(id) {
 async function renderPreview(id) {
   showLoading();
   const res = await api('getForm', {}, id);
+  await loadStores();
   hideLoading();
   const form = res.form;
   if (!form) { location.hash=''; return; }
@@ -602,6 +603,51 @@ async function renderPreview(id) {
     <h2>${escHtml(form.title||'Chưa có tiêu đề')}</h2>
     ${form.description?`<p>${escHtml(form.description)}</p>`:''}
     ${form.crosslinkEnabled?'<div class="crosslink-badge">🔗 Cross Link GĐV / QLKV / CH</div>':''}</div>`;
+  
+  // Show cross-linked GĐV×QLKV×CH list
+  if (form.crosslinkEnabled) {
+    var selGDV = (form.crosslinkGDV||'').split(',').filter(Boolean);
+    var selQLKV = (form.crosslinkQLKV||'').split(',').filter(Boolean);
+    var selCH = form.crosslinkCH||'';
+    if (selGDV.length > 0 || selQLKV.length > 0 || selCH) {
+      h += '<div class="preview-item" style="background:#f0fdf4;border:2px solid #bbf7d0">';
+      h += '<div class="pi-number">📋 Danh sách GĐV × QLKV × CH được Cross Link</div>';
+      h += '<table style="width:100%;margin-top:8px;font-size:13px;border-collapse:collapse">';
+      h += '<thead><tr style="background:#dcfce7;text-align:left"><th style="padding:6px">GĐV</th><th style="padding:6px">QLKV</th><th style="padding:6px">CH</th></tr></thead><tbody>';
+      var rowCount = 0;
+      var shownQlkv = {};
+      // Filter stores by selected GĐV/QLKV
+      storesCache.forEach(function(s){
+        if (selGDV.length > 0 && selGDV.indexOf(s.gdv) < 0) return;
+        if (selQLKV.length > 0 && selQLKV.indexOf(s.qlkv) < 0) return;
+        if (selCH && s.masap !== selCH) return;
+        // Only show unique GĐV×QLKV pairs, not all CH
+        var key = s.gdv + '||' + s.qlkv;
+        if (shownQlkv[key]) return;
+        shownQlkv[key] = { gdv: s.gdv, qlkv: s.qlkv, count: 0 };
+      });
+      // Count CH per GĐV×QLKV
+      storesCache.forEach(function(s){
+        if (selGDV.length > 0 && selGDV.indexOf(s.gdv) < 0) return;
+        if (selQLKV.length > 0 && selQLKV.indexOf(s.qlkv) < 0) return;
+        if (selCH && s.masap !== selCH) return;
+        var key = s.gdv + '||' + s.qlkv;
+        if (shownQlkv[key]) shownQlkv[key].count++;
+      });
+      Object.values(shownQlkv).forEach(function(row){
+        h += '<tr><td style="padding:6px;border-bottom:1px solid #e2e8f0">'+escHtml(row.gdv)+'</td>';
+        h += '<td style="padding:6px;border-bottom:1px solid #e2e8f0">'+escHtml(row.qlkv)+'</td>';
+        h += '<td style="padding:6px;border-bottom:1px solid #e2e8f0">'+row.count+' cửa hàng</td></tr>';
+        rowCount++;
+      });
+      if (rowCount === 0) {
+        h += '<tr><td colspan="3" style="padding:12px;text-align:center;color:var(--muted)">⚠️ Chưa có GĐV/QLKV nào được chọn</td></tr>';
+      }
+      h += '</tbody></table>';
+      h += '<div style="margin-top:6px;font-size:12px;color:var(--muted);text-align:right">Tổng: ' + rowCount + ' nhóm GĐV×QLKV</div>';
+      h += '</div>';
+    }
+  }
   
   (form.questions||[]).forEach((q,i)=>{
     h += `<div class="preview-item"><div class="pi-number">${i+1}. ${escHtml(q.title||'Câu hỏi '+(i+1))} ${q.required?'<span class="pi-required">*</span>':''}</div>`;
