@@ -8,8 +8,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap');
 :root {
   --primary: #4f46e5; --primary-light: #eef2ff; --border: #e2e8f0;
-  --bg: #f8fafc; --card: #fff; --text: #1e293b; --muted: #64748b;
-  --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
+  --bg: #f8fafc; --card: #fff; --text: #1a3c6e; --muted: #64748b;
+  --danger: #ef4444; --success: #10b981; --warning: #1a3c6e;
 }
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
@@ -64,8 +64,8 @@ header nav { display:flex; gap:8px; }
 .add-question-bar button { flex:1; min-width:120px; padding:10px; background:var(--card); border:1px dashed var(--border); border-radius:8px; cursor:pointer; font-size:14px; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:6px; }
 .add-question-bar button:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
 
-.crosslink-section { background:#f0fdf4; border:2px solid #bbf7d0; border-radius:12px; padding:16px; margin-bottom:16px; }
-.crosslink-section h3 { font-size:16px; color:#166534; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.crosslink-section { background:#e8f0fe; border:2px solid #e8f0fe; border-radius:12px; padding:16px; margin-bottom:16px; }
+.crosslink-section h3 { font-size:16px; color:#1a3c6e; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 .crosslink-row { display:flex; gap:12px; align-items:center; margin-bottom:8px; }
 .crosslink-row label { font-size:13px; font-weight:500; color:var(--muted); min-width:70px; }
 .crosslink-row select { flex:1; border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:14px; background:var(--card); }
@@ -93,17 +93,17 @@ header nav { display:flex; gap:8px; }
 .stat-card .num { font-size:28px; font-weight:700; color:var(--primary); }
 .stat-card .label { font-size:13px; color:var(--muted); margin-top:4px; }
 
-.toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:12px 20px; border-radius:8px; font-size:14px; z-index:1000; animation:slideIn .3s ease; }
+.toast { position:fixed; bottom:24px; right:24px; background:#1a3c6e; color:#fff; padding:12px 20px; border-radius:8px; font-size:14px; z-index:1000; animation:slideIn .3s ease; }
 @keyframes slideIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 .hidden { display:none !important; }
 .spinner { display:inline-block; width:20px; height:20px; border:2px solid #e2e8f0; border-top-color:var(--primary); border-radius:50%; animation:spin .6s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:500; }
-.badge-green { background:#dcfce7; color:#166534; }
+.badge-green { background:#e8f0fe; color:#1a3c6e; }
 .badge-blue { background:#dbeafe; color:#1e40af; }
 
 .loading-overlay { position:fixed; inset:0; background:rgba(255,255,255,.7); z-index:300; display:flex; align-items:center; justify-content:center; }
-.setup-banner { background:#fef3c7; border:1px solid #fcd34d; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:14px; }
+.setup-banner { background:#fef9c3; border:1px solid #ffc107; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:14px; }
 .setup-banner code { background:#fde68a; padding:2px 6px; border-radius:4px; font-size:13px; }
 
 @media (prefers-color-scheme: dark) {
@@ -472,7 +472,7 @@ function buildEditorHTML(form) {
   
   h += renderCrosslinkHTML(form);
   
-  h += '<div style="background:#fef3c7;border:2px solid #fcd34d;border-radius:10px;padding:14px;margin-bottom:14px"><h3 style="font-size:14px;color:#92400e;margin-bottom:8px">⏰ Thời gian hiệu lực</h3><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">'+(form.deadline?'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)" checked>':'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">')+'<span style="font-size:13px">Giới hạn thời gian điền form (Cutoff Time)</span></label><div id="deadline-picker" style="display:'+(form.deadline?'block':'none')+'"><label style="font-size:12px;color:var(--muted)">Hạn chót:</label><input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" value="'+(form.deadline||'')+'" onchange="updateDeadlineF(this.value)"></div></div>';
+  h += '<div style="background:#fef9c3;border:2px solid #ffc107;border-radius:10px;padding:14px;margin-bottom:14px"><h3 style="font-size:14px;color:#1a3c6e;margin-bottom:8px">⏰ Thời gian hiệu lực</h3><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">'+(form.deadline?'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)" checked>':'<input type="checkbox" id="deadline-toggle" onchange="toggleDeadlineF(this.checked)">')+'<span style="font-size:13px">Giới hạn thời gian điền form (Cutoff Time)</span></label><div id="deadline-picker" style="display:'+(form.deadline?'block':'none')+'"><label style="font-size:12px;color:var(--muted)">Hạn chót:</label><input type="datetime-local" id="deadline-input" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin-top:4px" value="'+(form.deadline||'')+'" onchange="updateDeadlineF(this.value)"></div></div>';
   
   h += '<div id="questions-container">';
   (form.questions||[]).forEach((q, idx) => { h += renderQuestion(q, idx, id); });
@@ -621,10 +621,10 @@ async function renderPreview(id) {
     var selQLKV = (form.crosslinkQLKV||'').split(',').filter(Boolean);
     var selCH = form.crosslinkCH||'';
     if (selGDV.length > 0 || selQLKV.length > 0 || selCH) {
-      h += '<div class="preview-item" style="background:#f0fdf4;border:2px solid #bbf7d0">';
+      h += '<div class="preview-item" style="background:#e8f0fe;border:2px solid #e8f0fe">';
       h += '<div class="pi-number">📋 Danh sách GĐV × QLKV × CH được Cross Link</div>';
       h += '<table style="width:100%;margin-top:8px;font-size:13px;border-collapse:collapse">';
-      h += '<thead><tr style="background:#dcfce7;text-align:left"><th style="padding:6px">GĐV</th><th style="padding:6px">QLKV</th><th style="padding:6px">CH</th></tr></thead><tbody>';
+      h += '<thead><tr style="background:#e8f0fe;text-align:left"><th style="padding:6px">GĐV</th><th style="padding:6px">QLKV</th><th style="padding:6px">CH</th></tr></thead><tbody>';
       var rowCount = 0;
       var shownQlkv = {};
       // Filter stores by selected GĐV/QLKV
@@ -702,7 +702,7 @@ async function renderFill(id) {
     ${form.description?`<p>${escHtml(form.description)}</p>`:''}</div>`;
   
   if (form.crosslinkEnabled) {
-    h += `<div class="preview-item" style="background:#f0fdf4">
+    h += `<div class="preview-item" style="background:#e8f0fe">
       <div class="pi-number">🔗 Thông tin GĐV / QLKV / CH <span class="pi-required">*</span></div>`;
     if (!form.crosslinkGDV) {
       h += `<div style="margin-top:8px"><label style="font-size:13px;color:var(--muted)">GĐV:</label>
